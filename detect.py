@@ -105,57 +105,57 @@ if __name__ == "__main__":
             print("type error: " +str(e))
             sleep(2*60)
             continue
-        
-        print("\nPerforming object detection:")
-        prev_time = time.time()
-        for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
-            # Configure input
-            input_imgs = Variable(input_imgs.type(Tensor))
+        else:
+            print("\nPerforming object detection:")
+            prev_time = time.time()
+            for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
+                # Configure input
+                input_imgs = Variable(input_imgs.type(Tensor))
 
-            # Get detections
-            with torch.no_grad():
-                detections = model(input_imgs)
-                detections = non_max_suppression(detections, opt.conf_thres, opt.nms_thres)
+                # Get detections
+                with torch.no_grad():
+                    detections = model(input_imgs)
+                    detections = non_max_suppression(detections, opt.conf_thres, opt.nms_thres)
 
-            # Log progress
-            current_time = time.time()
-            inference_time = datetime.timedelta(seconds=current_time - prev_time)
-            prev_time = current_time
-            print("\t+ Batch %d, Inference Time: %s" % (batch_i, inference_time))
+                # Log progress
+                current_time = time.time()
+                inference_time = datetime.timedelta(seconds=current_time - prev_time)
+                prev_time = current_time
+                print("\t+ Batch %d, Inference Time: %s" % (batch_i, inference_time))
 
-            # Save image and detections
-            imgs.extend(img_paths)
-            img_detections.extend(detections)
+                # Save image and detections
+                imgs.extend(img_paths)
+                img_detections.extend(detections)
 
-        print("\nSaving images:")
-        # Iterate through images and save plot of detections
-        nv = 0
-        for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
+            print("\nSaving images:")
+            # Iterate through images and save plot of detections
+            nv = 0
+            for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
 
-            print("(%d) Image: '%s'" % (img_i, path))
+                print("(%d) Image: '%s'" % (img_i, path))
 
-            # Create plot
-            img = np.array(Image.open(path))
-            
-            # Draw bounding boxes and labels of detections
-            if detections is not None:
-                # Rescale boxes to original image
-                detections = rescale_boxes(detections, opt.img_size, img.shape[:2])
+                # Create plot
+                img = np.array(Image.open(path))
                 
-                for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                    #print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
-                    v = True
-                    for x1u, y1u, x2u, y2u, confu, cls_confu, cls_predu in detections:
-                        if int(cls_pred) == int(cls_predu): ## IoU to diferent classes
-                            continue
-                        else:
-                            iou = bb_IoU((x1,y1, x2, y2), (x1u, y1u, x2u, y2u))
-                            if iou > 0.8 and float(cls_conf) < float(cls_confu):
-                                v = False
-                    if (classes[int(cls_pred)] == 'vehicle' and v):
-                        nv += 1
-                
-        print ("Number of vehicles in the image = " + str(nv))
-        client.connect("mqtt.demo.konkerlabs.net", 1883)
-        client.publish("data/8qttpktuerb8/pub/Vagas", max(0, max_vagas-nv))
-        os.system('rm ~/p2/*.jpg')
+                # Draw bounding boxes and labels of detections
+                if detections is not None:
+                    # Rescale boxes to original image
+                    detections = rescale_boxes(detections, opt.img_size, img.shape[:2])
+                    
+                    for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+                        #print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
+                        v = True
+                        for x1u, y1u, x2u, y2u, confu, cls_confu, cls_predu in detections:
+                            if int(cls_pred) == int(cls_predu): ## IoU to diferent classes
+                                continue
+                            else:
+                                iou = bb_IoU((x1,y1, x2, y2), (x1u, y1u, x2u, y2u))
+                                if iou > 0.8 and float(cls_conf) < float(cls_confu):
+                                    v = False
+                        if (classes[int(cls_pred)] == 'vehicle' and v):
+                            nv += 1
+                    
+            print ("Number of vehicles in the image = " + str(nv))
+            client.connect("mqtt.demo.konkerlabs.net", 1883)
+            client.publish("data/8qttpktuerb8/pub/Vagas", max(0, max_vagas-nv))
+            os.system('rm ~/p2/*.jpg')
