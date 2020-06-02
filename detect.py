@@ -107,6 +107,12 @@ if __name__ == "__main__":
             continue
         else:
             print("\nPerforming object detection:")
+            dataloader = DataLoader(
+                ImageFolder(opt.image_folder, img_size=opt.img_size),
+                batch_size=opt.batch_size,
+                shuffle=False,
+                num_workers=opt.n_cpu,
+            )
             prev_time = time.time()
             for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
                 # Configure input
