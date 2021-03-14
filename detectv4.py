@@ -42,7 +42,7 @@ def bb_IoU(boxA, boxB):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image_folder", type=str, default="/home/joao.victor/p2/", help="path to dataset")
+    parser.add_argument("--image_folder", type=str, default="../p2/", help="path to dataset")
     #parser.add_argument("--output_folder", type=str, default="output", help="path to output folder")
     parser.add_argument("--model_def", type=str, default="/home/joao.victor/PyTorch-YOLOv3/config/yolov3.cfg", help="path to model definition file")
     parser.add_argument("--weights_path", type=str, default="/home/joao.victor/PyTorch-YOLOv3/weights/yolov3.weights", help="path to weights file")
@@ -96,9 +96,9 @@ if __name__ == "__main__":
         img_detections = []  # Stores detections for each image index
 
 
-        os.system('rm ~/p2/*.jpg')
+        os.system('rm ../p2/*.jpg')
         try:
-            os.system('python2 /home/joao.victor/SmartParking/takepic.py ')
+            os.system('python2 ../SmartParking/takepic.py ')
         
         except Exception as e:
             print("houve algum erro tirando a foto, tentando de novo dentro de 1 min")
@@ -160,8 +160,14 @@ if __name__ == "__main__":
                                     v = False
                         if (classes[int(cls_pred)] == 'vehicle' and v):
                             nv += 1
-                    
-            print ("Number of vehicles in the image = " + str(nv))
-            client.connect("mqtt.demo.konkerlabs.net", 1883)
-            client.publish("data/8qttpktuerb8/pub/Vagas", max(0, max_vagas-nv))
-            os.system('rm ~/p2/*.jpg')
+            try:        
+                print ("Number of vehicles in the image = " + str(nv))
+                client.connect("mqtt.demo.konkerlabs.net", 1883)
+                client.publish("data/8qttpktuerb8/pub/Vagas", max(0, max_vagas-nv))
+            except Exception as e:
+                print("Erro de conexão com o servidor mqtt, tentando de novo dentro um 1 minuto")
+                print( str(e))
+                print('error date: %s' % datetime.datetime.now())
+                sleep(1*60)
+            finally:
+                os.system('rm ../p2/*.jpg')
